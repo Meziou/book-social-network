@@ -6,10 +6,14 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -17,14 +21,14 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfig {
 
-    private JwtFilter jwtauthFilter;
+    private final JwtFilter jwtauthFilter;
     private final AuthenticationProvider authenticationProvider;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequest(req ->
+                .authorizeHttpRequests(req ->
                     req.requestMatchers(
                         "/api/auth/**",
                         "/V2/api-docs",
@@ -37,13 +41,14 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/webjars/**"
-                    ).permiAll()
+                    ).permitAll()
                             .anyRequest()
                                 .authenticated()
                     )
-                    .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authenticationProvider(authenticationProvider)
                     .addFilterBefore(jwtauthFilter, UsernamePasswordAuthenticationFilter.class);
         
+                    return http.build();
     }
 }
